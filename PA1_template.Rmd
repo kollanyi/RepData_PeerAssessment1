@@ -1,25 +1,132 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "Personal activity data"
+author: "Kollanyi"
+date: "July 17, 2015"
+output: html_document
+keep_md: TRUE
 ---
 
+opts_chunk$set(echo=TRUE, results='asis')
 
-## Loading and preprocessing the data
+Before you start: Please unzip the activity file and set your working directory according to its location. 
 
+First thing first, load the data.  
 
-
-## What is mean total number of steps taken per day?
-
-
-
-## What is the average daily activity pattern?
-
-
-
-## Imputing missing values
+```{r}
+activity <- read.csv('activity.csv', sep=",", na.strings = "NA",
+                  colClasses =c("numeric", "Date", "numeric"))
+```
 
 
+Load all the librearies:
 
-## Are there differences in activity patterns between weekdays and weekends?
+What is mean total number of steps taken per day?
+
+Make a histogram of the total number of steps taken each day.
+
+```{r}
+ndStep <- tapply(activity$steps, activity$date, function(x) sum(x, na.rm = TRUE))
+hist(ndStep, breaks = 15, col="lightblue", main="Daily Number of Steps",  xlab="Steps")
+```
+
+
+Calculate the mean and median of the total number of steps taken per day.
+
+```{r}
+ndStepMean <-mean(ndStep, na.rm = TRUE)
+ndStepMean
+```
+
+```{r}
+ndStepsMedian<- median(ndStep,na.rm = TRUE)
+ndStepsMedian
+```
+
+
+Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
+
+```{r}
+library(lattice) 
+aggActivity <- aggregate(activity$steps ~ activity$interval, FUN = "mean",  na.rm=T)
+names(aggActivity) <- c("interval","avesteps")
+xyplot(aggActivity$avesteps ~ aggActivity$interval, type = "l", xlab = "5-mins Intervals", ylab =  "Average # of Steps", main = "Time Series Plot")
+```
+
+Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+
+```{r}
+max <- which.max(aggActivity$avesteps)
+```
+
+Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)
+
+```{r}
+table(is.na(activity$steps))["TRUE"]
+```
+
+Create a new dataset that is equal to the original dataset but with the missing data filled in
+
+```{r}
+library(zoo)
+miss <- na.aggregate(activity$steps)
+activity -> activitynomiss
+activitynomiss$steps <- miss
+```
+
+Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+
+```{r}
+missStep <- tapply(activitynomiss$steps, activitynomiss$date, function(x) sum(x, na.rm = TRUE))
+hist(missStep, breaks = 15, col="lightblue", main="Daily Number of Steps",  xlab="Steps")
+```
+
+
+Calculate the mean and median of the total number of steps taken per day.
+
+```{r}
+missStepMean <-mean(missStep, na.rm = TRUE)
+missStepMean
+```
+
+```{r}
+missStepsMedian<- median(missStep,na.rm = TRUE)
+missStepsMedian
+```
+
+Define a function which separates weekends and weekdays. NOTE: Make sure that the LC_TIME is set to c you can check it with the command sessionInfo()
+
+
+```{r}
+we <- function(date) {
+  day <- weekdays(date)
+  if (day %in% c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday")) 
+    return("weekday") else if (day %in% c("Saturday", "Sunday")) 
+      return("weekend") else stop("invalid date")
+}
+```
+
+```{r}
+activitynomiss$date <- as.Date(activitynomiss$date)
+```
+
+```{r}
+activitynomiss$day <- we(activitynomiss$date)
+```
+
+
+```{r}
+aggActivity2 <- aggregate(activitynomiss$steps ~ activitynomiss$interval + activitynomiss$day, FUN = "mean",  na.rm=T)
+names(aggActivity2) <- c("interval","day", "avesteps")
+
+```
+
+
+Plot two graphs which help to compare weekends with weekdays.
+
+```{r}
+ggplot(aggActivity2, aes(interval, avesteps)) + geom_line() + facet_grid(day ~ .) +  xlab("5-minute interval") + ylab("Number of steps")
+```
+
+
+
