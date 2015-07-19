@@ -2,8 +2,10 @@
 title: "Personal activity data"
 author: "Kollanyi"
 date: "July 17, 2015"
-output: html_document
-keep_md: TRUE
+output:
+  html_document:
+    keep_md: yes
+keep_md: yes
 ---
 
 opts_chunk$set(echo=TRUE, results='asis')
@@ -96,37 +98,6 @@ missStepsMedian
 
 Define a function which separates weekends and weekdays. NOTE: Make sure that the LC_TIME is set to c you can check it with the command sessionInfo()
 
-
-```{r}
-we <- function(date) {
-  day <- weekdays(date)
-  if (day %in% c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday")) 
-    return("weekday") else if (day %in% c("Saturday", "Sunday")) 
-      return("weekend") else stop("invalid date")
-}
-```
-
-```{r}
-activitynomiss$date <- as.Date(activitynomiss$date)
-```
-
-```{r}
-activitynomiss$day <- we(activitynomiss$date)
-```
-
-
-```{r}
-aggActivity2 <- aggregate(activitynomiss$steps ~ activitynomiss$interval + activitynomiss$day, FUN = "mean",  na.rm=T)
-names(aggActivity2) <- c("interval","day", "avesteps")
-
-```
-
-
-Plot two graphs which help to compare weekends with weekdays.
-
-```{r}
-ggplot(aggActivity2, aes(interval, avesteps)) + geom_line() + facet_grid(day ~ .) +  xlab("5-minute interval") + ylab("Number of steps")
-```
 
 
 
